@@ -43,6 +43,12 @@ on:
 env:
   PYTHONUNBUFFERED: "1"
 
+# Add explicit permissions for GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
 concurrency:
   group: pr-test-${{ github.ref }}
   cancel-in-progress: true
