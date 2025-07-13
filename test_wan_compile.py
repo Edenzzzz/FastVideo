@@ -43,7 +43,7 @@ model = loader.load(TRANSFORMER_PATH, args).to(dtype=precision)
 
 # Set both models to eval mode
 model = model.eval()
-model = torch.compile(model)
+# model = torch.compile(model)
 # Create identical inputs for both models
 batch_size = 1
 seq_len = 30
