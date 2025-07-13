@@ -7,11 +7,13 @@ import torch.distributed
 from fastvideo.v1.distributed.parallel_state import get_sp_group, get_tp_group
 
 
+@torch.compiler.disable()
 def tensor_model_parallel_all_reduce(input_: torch.Tensor) -> torch.Tensor:
     """All-reduce the input tensor across model parallel group."""
     return get_tp_group().all_reduce(input_)
 
 
+@torch.compiler.disable()
 def tensor_model_parallel_all_gather(input_: torch.Tensor,
                                      dim: int = -1) -> torch.Tensor:
     """All-gather the input tensor across model parallel group."""
@@ -19,6 +21,7 @@ def tensor_model_parallel_all_gather(input_: torch.Tensor,
 
 
 # TODO: remove model, make it sequence_parallel
+@torch.compiler.disable()
 def sequence_model_parallel_all_to_all_4D(input_: torch.Tensor,
                                           scatter_dim: int = 2,
                                           gather_dim: int = 1) -> torch.Tensor:
@@ -26,6 +29,7 @@ def sequence_model_parallel_all_to_all_4D(input_: torch.Tensor,
     return get_sp_group().all_to_all_4D(input_, scatter_dim, gather_dim)
 
 
+@torch.compiler.disable()
 def sequence_model_parallel_all_gather(input_: torch.Tensor,
                                        dim: int = -1) -> torch.Tensor:
     """All-gather the input tensor across model parallel group."""
