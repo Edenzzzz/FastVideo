@@ -612,7 +612,8 @@ class TrainingPipeline(LoRAPipeline, ABC):
                                            num_workers=0)
 
         transformer.eval()
-
+        if isinstance(self.validation_pipeline, LoRAPipeline):
+            self.validation_pipeline.merge_lora_weights()
         validation_steps = training_args.validation_sampling_steps.split(",")
         validation_steps = [int(step) for step in validation_steps]
         validation_steps = [step for step in validation_steps if step > 0]
@@ -704,3 +705,5 @@ class TrainingPipeline(LoRAPipeline, ABC):
         # Re-enable gradients for training
         training_args.inference_mode = False
         transformer.train()
+        if isinstance(self.validation_pipeline, LoRAPipeline):
+            self.validation_pipeline.unmerge_lora_weights()
