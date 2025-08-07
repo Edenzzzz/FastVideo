@@ -131,10 +131,18 @@ class BaseLayerWithLoRA(nn.Module):
             )
             # Using offload param is on CPU, so current_device is for "CPU -> GPU -> merge -> CPU"
             current_device = self.base_layer.weight.data.device
+            lora_B = self.lora_B
+            lora_A = self.lora_A
+            if isinstance(self.lora_B,
+                          DTensor):  # lora weights are DTensor in training
+                lora_B = self.lora_B.full_tensor()
+            if isinstance(self.lora_A, DTensor):
+                lora_A = self.lora_A.full_tensor()
+
             data = self.base_layer.weight.data.to(
                 get_local_torch_device()).full_tensor()
-            data += (self.slice_lora_b_weights(self.lora_B).to(data)
-                     @ self.slice_lora_a_weights(self.lora_A).to(data))
+            data += (self.slice_lora_b_weights(lora_B).to(data)
+                     @ self.slice_lora_a_weights(lora_A).to(data))
             unsharded_base_layer.weight = nn.Parameter(data.to(current_device))
             if isinstance(getattr(self.base_layer, "bias", None), DTensor):
                 unsharded_base_layer.bias = nn.Parameter(
