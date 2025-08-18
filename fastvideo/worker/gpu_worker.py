@@ -98,6 +98,9 @@ class Worker:
                          lora_path: str | None = None) -> None:
         self.pipeline.set_lora_adapter(lora_nickname, lora_path)
 
+    def unmerge_lora_weights(self) -> None:
+        self.pipeline.unmerge_lora_weights()
+
     def shutdown(self) -> dict[str, Any]:
         """Gracefully shut down the worker process"""
         logger.info("Worker %d shutting down...",
@@ -147,6 +150,10 @@ class Worker:
                     logger.info("Worker %d set LoRA adapter %s with path %s",
                                 self.rank, lora_nickname, lora_path)
                     self.pipe.send({"status": "lora_adapter_set"})
+                elif method_name == 'unmerge_lora_weights':
+                    self.unmerge_lora_weights()
+                    logger.info("Worker %d unmerged LoRA weights", self.rank)
+                    self.pipe.send({"status": "lora_adapter_unmerged"})
                 else:
                     # Handle other methods dynamically if needed
                     args = recv_rpc.get('args', ())

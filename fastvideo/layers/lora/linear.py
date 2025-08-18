@@ -68,27 +68,32 @@ class BaseLayerWithLoRA(nn.Module):
             self.lora_A = None
             self.lora_B = None
 
-    @torch.compile()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if not self.merged and not self.disable_lora:
+            return self.forward_unmerged(x)
+        else:
+            return self.forward_merged(x)
+
+    @torch.compile(dynamic=True)
+    def forward_merged(self, x: torch.Tensor) -> torch.Tensor:
+        return self.base_layer(x)
+
+    @torch.compile(dynamic=True)
+    def forward_unmerged(self, x: torch.Tensor) -> torch.Tensor:
         lora_A = self.lora_A
         lora_B = self.lora_B
         if isinstance(self.lora_B, DTensor):
             lora_B = self.lora_B.to_local()
             lora_A = self.lora_A.to_local()
-
-        if (self.training_mode or not self.merged) and not self.disable_lora:
-            delta = x @ (
-                self.slice_lora_b_weights(lora_B.to(x, non_blocking=True))
-                @ self.slice_lora_a_weights(lora_A.to(x, non_blocking=True)))
-            if self.lora_alpha != self.lora_rank:
-                delta = delta * (
-                    self.lora_alpha / self.lora_rank  # type: ignore
-                )  # type: ignore
-            out, output_bias = self.base_layer(x)
-            return out + delta, output_bias
-        else:
-            out, output_bias = self.base_layer(x)
-            return out.to(x), output_bias
+        delta = x @ (
+            self.slice_lora_b_weights(lora_B.to(x, non_blocking=True))
+            @ self.slice_lora_a_weights(lora_A.to(x, non_blocking=True)))
+        if self.lora_alpha != self.lora_rank:
+            delta = delta * (
+                self.lora_alpha / self.lora_rank  # type: ignore
+            )  # type: ignore
+        out, output_bias = self.base_layer(x)
+        return out + delta, output_bias
 
     def slice_lora_a_weights(self, A: torch.Tensor) -> torch.Tensor:
         return A
@@ -180,13 +185,14 @@ class BaseLayerWithLoRA(nn.Module):
             )
 
         # avoid precision loss
-        if isinstance(self.base_layer.weight, DTensor):
-            device = self.base_layer.weight.data.device
-            self.base_layer.weight = nn.Parameter(
-                self.cpu_weight.to(device, non_blocking=True))
-        else:
-            self.base_layer.weight.data = self.cpu_weight.data.to(
-                self.base_layer.weight, non_blocking=True)
+        self.base_layer.weight.copy_(self.cpu_weight, non_blocking=True)
+        # if isinstance(self.base_layer.weight, DTensor):
+        #     device = self.base_layer.weight.data.device
+        #     self.base_layer.weight = nn.Parameter(
+        #         self.cpu_weight.to(device, non_blocking=True))
+        # else:
+        #     self.base_layer.weight.data = self.cpu_weight.data.to(
+        #         self.base_layer.weight, non_blocking=True)
 
         self.merged = False
 

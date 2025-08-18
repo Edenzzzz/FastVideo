@@ -612,6 +612,8 @@ class TrainingPipeline(LoRAPipeline, ABC):
                                            num_workers=0)
 
         transformer.eval()
+        if isinstance(self, LoRAPipeline):
+            self.merge_lora_weights()
         if isinstance(self.validation_pipeline, LoRAPipeline):
             self.validation_pipeline.merge_lora_weights()
         validation_steps = training_args.validation_sampling_steps.split(",")
