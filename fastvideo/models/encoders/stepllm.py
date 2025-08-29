@@ -475,10 +475,10 @@ class TransformerBlock(nn.Module):
         cu_seqlens: torch.Tensor | None,
         max_seq_len: torch.Tensor | None,
     ):
-        residual = self.attention.forward(self.attention_norm(x), mask,
+        residual = self.attention(self.attention_norm(x), mask,
                                           cu_seqlens, max_seq_len)
         h = x + residual
-        ffn_res = self.feed_forward.forward(self.ffn_norm(h))
+        ffn_res = self.feed_forward(self.ffn_norm(h))
         out = h + ffn_res
         return out
 

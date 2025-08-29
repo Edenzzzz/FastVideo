@@ -197,7 +197,7 @@ class WanCausalConv3d(nn.Conv3d):
         x = F.pad(x, padding)
         x = x.to(self.weight.dtype) if current_platform.is_mps(
         ) else x  # casting needed for mps since amp isn't supported
-        return super().forward(x)
+        return super()(x)
 
 
 class WanRMS_norm(nn.Module):
@@ -243,7 +243,7 @@ class WanUpsample(nn.Upsample):
     """
 
     def forward(self, x):
-        return super().forward(x.float()).type_as(x)
+        return super()(x.float()).type_as(x)
 
 
 class WanResample(nn.Module):
