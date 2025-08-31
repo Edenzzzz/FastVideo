@@ -1,24 +1,25 @@
 #!/bin/bash
 
-GPU_NUM=1 # 2,4,8
+GPU_NUM=2 # 2,4,8
 MODEL_PATH="Wan-AI/Wan2.2-TI2V-5B-Diffusers"
-MODEL_TYPE="wan"
-DATA_MERGE_PATH="data/crush-smol/merge.txt"
-OUTPUT_DIR="data/crush-smol_processed_ti2v/"
+DATASET_PATH="data/crush-smol/"
+OUTPUT_DIR="data/crush-smol_processed_t2v/"
 
 torchrun --nproc_per_node=$GPU_NUM \
-    fastvideo/pipelines/preprocess/v1_preprocess.py \
+    -m fastvideo.pipelines.preprocess.v1_preprocessing_new \
     --model_path $MODEL_PATH \
-    --data_merge_path $DATA_MERGE_PATH \
-    --preprocess_video_batch_size 8 \
-    --seed 42 \
-    --max_height 704 \
-    --max_width 1280 \
-    --num_frames 121 \
-    --dataloader_num_workers 0 \
-    --output_dir=$OUTPUT_DIR \
-    --train_fps 24 \
-    --samples_per_file 8 \
-    --flush_frequency 8 \
-    --video_length_tolerance_range 5 \
-    --preprocess_task "t2v" 
+    --mode preprocess \
+    --workload_type t2v \
+    --preprocess.video_loader_type torchvision \
+    --preprocess.dataset_type merged \
+    --preprocess.dataset_path $DATASET_PATH \
+    --preprocess.dataset_output_dir $OUTPUT_DIR \
+    --preprocess.preprocess_video_batch_size 2 \
+    --preprocess.dataloader_num_workers 0 \
+    --preprocess.max_height 704 \
+    --preprocess.max_width 1280 \
+    --preprocess.num_frames 121 \
+    --preprocess.train_fps 24 \
+    --preprocess.samples_per_file 8 \
+    --preprocess.flush_frequency 8 \
+    --preprocess.video_length_tolerance_range 5
